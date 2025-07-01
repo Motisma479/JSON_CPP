@@ -390,8 +390,8 @@ value_t JSON::ParseLiteral(std::istream& in, const std::string& literal, value_t
 value_t JSON::ParseNumber(std::istream& in) {
     std::string numStr;
     bool isFloating = false;
-    while (std::isdigit(in.peek()) || in.peek() == '.' || in.peek() == '-' || in.peek() == '+') {
-        if (in.peek() == '.') isFloating = true;
+    while (std::isdigit(in.peek()) || in.peek() == '.' || in.peek() == '-' || in.peek() == '+' || in.peek() == 'e' || in.peek() == 'E') {
+        if (in.peek() == '.' || in.peek() == 'e' || in.peek() == 'E') isFloating = true;
         numStr += in.get();
     }
     if (isFloating)
