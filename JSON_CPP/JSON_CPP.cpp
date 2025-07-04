@@ -307,6 +307,8 @@ std::istream& JSON::SkipWhitespace(std::istream& in)
     return in;
 }
 
+#include <iostream>
+#include <string>
 std::string JSON::ParseString(std::istream& in)
 {
     std::string result;
@@ -320,7 +322,44 @@ std::string JSON::ParseString(std::istream& in)
             switch (esc) {
             case '"': result += '"'; break;
             case '\\': result += '\\'; break;
+            case '/': result += '\/'; break;
+            case 'b': result += '\b'; break;
+            case 'f': result += '\f'; break;
             case 'n': result += '\n'; break;
+            case 'r': result += '\r'; break;
+            case 't': result += '\t'; break;
+            case 'u':
+            {
+                uint16_t codePoint = 0;
+                for (int i = 0; i < 4; i++)
+                {
+                    if (std::isxdigit(in.peek()))
+                    {
+                        char digit;
+                        in.get(digit);
+                        codePoint <<= 4; // shift 4 bits (hex digit)
+                        if (digit >= '0' && digit <= '9') codePoint |= (digit - '0');
+                        else if (digit >= 'A' && digit <= 'F') codePoint |= (digit - 'A' + 10);
+                        else if (digit >= 'a' && digit <= 'f') codePoint |= (digit - 'a' + 10);
+                    }
+                    else throw std::runtime_error("invlid \\u sequence");
+                }
+
+                std::string utf8;
+                if (codePoint <= 0x7F)
+                    utf8 += static_cast<char>(codePoint);
+                else if (codePoint <= 0x7FF) {
+                    utf8 += static_cast<char>(0xC0 | ((codePoint >> 6) & 0x1F));
+                    utf8 += static_cast<char>(0x80 | (codePoint & 0x3F));
+                }
+                else {
+                    utf8 += static_cast<char>(0xE0 | ((codePoint >> 12) & 0x0F));
+                    utf8 += static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F));
+                    utf8 += static_cast<char>(0x80 | (codePoint & 0x3F));
+                }
+                result += utf8;
+                break;
+            }
             default: throw std::runtime_error("Unknown escape");
             }
         }
