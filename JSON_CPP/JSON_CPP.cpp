@@ -14,6 +14,10 @@ value_t::operator double() const
 {
     return std::get<double>(*this);
 }
+value_t::operator float() const
+{
+    return static_cast<float>(std::get<double>(*this));
+}
 value_t::operator bool() const
 {
     return std::get<double>(*this);
@@ -227,6 +231,11 @@ value_t& value_t::Proxy::operator = (const value_t& value)
     }
 }
 
+std::ostream& operator<<(std::ostream& os, const value_t::Proxy& v)
+{
+    return os << v.operator value_t();
+}
+
 value_t::Proxy::operator value_t() const
 {
     object_t& temp = std::get<object_t>(parent_);
@@ -238,6 +247,31 @@ value_t::Proxy::operator value_t() const
 
     return *(it->second);
 }
+value_t::Proxy::operator std::string() const
+{
+    return operator value_t().operator std::string();
+}
+value_t::Proxy::operator int() const
+{
+    return operator value_t().operator int();
+}
+value_t::Proxy::operator double() const
+{
+    return operator value_t().operator double();
+}
+value_t::Proxy::operator float() const
+{
+    return operator value_t().operator float();
+}
+value_t::Proxy::operator bool() const
+{
+    return operator value_t().operator bool();
+}
+value_t::Proxy::operator std::nullptr_t() const
+{
+    return operator value_t().operator std::nullptr_t();
+}
+
 
 value_t::Proxy value_t::Proxy::operator[](const char* key)
 {

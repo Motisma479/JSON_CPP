@@ -28,6 +28,7 @@ struct value_t : std::variant<
     operator std::string() const;
     operator int() const;
     operator double() const;
+    operator float() const;
     operator bool() const;
     operator std::nullptr_t() const;
     operator object_t() const;
@@ -46,7 +47,15 @@ struct value_t : std::variant<
 
         value_t& operator = (const value_t& value);
 
+        friend std::ostream& operator<<(std::ostream& os, const value_t::Proxy& v);
+
         operator value_t() const;
+        operator std::string() const;
+        operator int() const;
+        operator double() const;
+        operator float() const;
+        operator bool() const;
+        operator std::nullptr_t() const;
 
         Proxy operator[](const char* key);
         value_t& operator[](int index);
