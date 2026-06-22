@@ -1,9 +1,10 @@
 #pragma once
-#include <iostream>
-#include <variant>
 #include <cassert>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <variant>
 
 #define jpp_assert(expr, msg) assert(( (void)(msg), (expr) ))
 
@@ -34,7 +35,7 @@ struct value_t : std::variant<
 
     //cout stream
     void Print(std::ostream& os, bool pretify = false, const char* tabText = "    ", int tabNumber = 1) const;
-    
+
     friend std::ostream& operator<<(std::ostream& os, const value_t& v);
 
     class Proxy //A proxy class to manage the access by key
@@ -53,7 +54,7 @@ struct value_t : std::variant<
     private:
         value_t& parent_;
         std::vector<const char*> keyHistory_ = {}; //this should be at 1 unless we are in an unexisting object;
-    
+
         std::pair<std::string, value_ptr> NestedObjectCreator(std::vector<const char*> keyHistory);
 
         value_t& GetLastObject(value_t& obj);
@@ -96,6 +97,7 @@ public:
     JSON(int _v);
     JSON(double _v);
     JSON(const char* _v);
+    JSON(const std::string& _v);
     JSON(array_t _v);
     JSON(object_t _v);
     JSON(nullptr_t _v);
@@ -104,7 +106,7 @@ public:
 
     value_t::Proxy operator [] (const char* key);
     value_t& operator [] (int index);
-    
+
     value_t Get();
 
 #pragma region Utility
@@ -144,7 +146,18 @@ public:
     }
     static object_t object();
 
+    friend std::ostream& operator<<(std::ostream& os, const JSON& v);
+
+    std::string ToString(bool pretify = true);
+    void FromString(const char* c_str);
+    void FromString(const std::string& str);
+
     void Write(const char* path, bool pretify = true);
+    void Write(const std::string& path, bool pretify = true);
+    void Write(const std::filesystem::path& path, bool pretify = true);
+
     void Read(const char* path);
+    void Read(const std::string& path);
+    void Read(const std::filesystem::path& path);
 #pragma endregion
 };

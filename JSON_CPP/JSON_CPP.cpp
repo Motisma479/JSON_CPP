@@ -160,7 +160,7 @@ std::ostream& operator<<(std::ostream& os, const value_t& v)
 value_t::Proxy value_t::operator[](const char* key)
 {
     jpp_assert(std::holds_alternative<object_t>(*this), "[const char*] only works on object_t");
-    return value_t::Proxy(*this,key);
+    return value_t::Proxy(*this, key);
 }
 value_t& value_t::operator[](int index)
 {
@@ -307,8 +307,6 @@ std::istream& JSON::SkipWhitespace(std::istream& in)
     return in;
 }
 
-#include <iostream>
-#include <string>
 std::string JSON::ParseString(std::istream& in)
 {
     std::string result;
@@ -445,9 +443,9 @@ value_t JSON::ParseValue(std::istream& in) {
     if (ch == '{') return ParseObject(in);
     if (ch == '[') return ParseArray(in);
     if (std::isdigit(ch) || ch == '-' || ch == '+') return ParseNumber(in);
-    if (in.peek() == 't') return ParseLiteral(in, "true", true);
-    if (in.peek() == 'f') return ParseLiteral(in, "false", false);
-    if (in.peek() == 'n') return ParseLiteral(in, "null", nullptr);
+    if (ch == 't') return ParseLiteral(in, "true", true);
+    if (ch == 'f') return ParseLiteral(in, "false", false);
+    if (ch == 'n') return ParseLiteral(in, "null", nullptr);
     throw std::runtime_error("Unknown JSON value");
 }
 
@@ -460,6 +458,7 @@ JSON::JSON(int _v) : value_(_v) {}
 JSON::JSON(double _v) : value_(_v) {}
 
 JSON::JSON(const char* _v) : value_(_v) {}
+JSON::JSON(const std::string& _v) : value_(_v) {}
 
 JSON::JSON(array_t _v) : value_(_v) {}
 
@@ -530,10 +529,40 @@ object_t JSON::object()
     return obj;
 }
 
+std::ostream& operator<<(std::ostream& os, const JSON& v)
+{
+    v.value_.Print(os, true);
+    return os;
+}
+
+std::string JSON::ToString(bool pretify)
+{
+    std::stringstream result;
+    value_.Print(result, pretify);
+    return result.str();
+}
+
+void JSON::FromString(const char* c_str)
+{
+    FromString(std::string(c_str));
+}
+void JSON::FromString(const std::string& str)
+{
+    std::stringstream temp(str);
+    value_ = ParseValue(temp);
+}
+
 void JSON::Write(const char* path, bool pretify)
 {
-    std::filesystem::path filePath(path);
-    std::filesystem::create_directories(filePath.parent_path());
+    Write(std::filesystem::path(path), pretify);
+}
+void JSON::Write(const std::string& path, bool pretify)
+{
+    Write(std::filesystem::path(path), pretify);
+}
+void JSON::Write(const std::filesystem::path& path, bool pretify)
+{
+    std::filesystem::create_directories(path.parent_path());
 
     std::ofstream jsonFile;
     jsonFile.open(path);
@@ -542,7 +571,16 @@ void JSON::Write(const char* path, bool pretify)
 
     jsonFile.close();
 }
+
 void JSON::Read(const char* path)
+{
+    Read(std::filesystem::path(path));
+}
+void JSON::Read(const std::string& path)
+{
+    Read(std::filesystem::path(path));
+}
+void JSON::Read(const std::filesystem::path& path)
 {
     std::ifstream jsonFile(path);
     if (!jsonFile.is_open()) {
